@@ -20,6 +20,7 @@ int main(int argc, char const *argv[])
 	while(1)
 	{
 		scanf("%s", string);
+		printf("PC: 0x%x\n", (unsigned int)code);
 		printf("Readed: 0x%x\n", *code);
 		ins = getInstruction(*code);
 		if(ins == NULL)
