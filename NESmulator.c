@@ -14,6 +14,8 @@ int main(int argc, char const *argv[])
 
 
 	cart = load_cart(argv[1]);
+	if(cart == NULL)
+		return 1;
 	code = cart->prg_rom + 0x0000FFFC;
 	while(1)
 	{
