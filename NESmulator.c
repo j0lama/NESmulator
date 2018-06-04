@@ -14,10 +14,13 @@ int main(int argc, char const *argv[])
 
 
 	cart = load_cart(argv[1]);
+	if(cart == NULL)
+		return 1;
 	code = cart->prg_rom + 0x0000FFFC;
 	while(1)
 	{
 		scanf("%s", string);
+		printf("PC: 0x%x\n", (unsigned int)code);
 		printf("Readed: 0x%x\n", *code);
 		ins = getInstruction(*code);
 		if(ins == NULL)

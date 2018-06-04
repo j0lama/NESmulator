@@ -1,6 +1,8 @@
 #ifndef CART_H
 #define CART_H
 
+#include <stdint.h>
+
 struct _nes_cart
 {
 	char * name;
