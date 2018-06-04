@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "cpu.h"
 
 
@@ -6,12 +7,15 @@ struct _instruction
 	char * signature;
 	char * auxSignature;
 	int length;
-	unsigned char code;
+	uint8_t code;
 	void * execute;
 };
 
 
 #define OPNUM 151
+
+#define RAM_SIZE 0x800
+
 /*Opcodes*/
 /*http://problemkaputt.de/everynes.htm#cpu65xxmicroprocessor*/
 
@@ -256,7 +260,7 @@ const instruction instructions[256] = {
 	//TODO
 };
 
-const instruction * getInstruction(unsigned char opcode)
+const instruction * getInstruction(uint8_t opcode)
 {
 	int i = 0;
 	for(i = 0; i < OPNUM; i++)
@@ -277,9 +281,84 @@ int getInstructionLength(const instruction * ins)
 void printOpcode(const instruction * ins)
 {
 	printf("Signature:\t%s\n", ins->signature);
-	printf("80x86:\t%s\n", ins->auxSignature);
-	printf("Length:\t%d\n", ins->length);
-	printf("Code:\t0x%x\n", ins->code);
+	printf("80x86:\t\t%s\n", ins->auxSignature);
+	printf("Length:\t\t%d\n", ins->length);
+	printf("Code:\t\t0x%x\n\n", ins->code);
+}
+
+cpu * initCPU(uint8_t * prg)
+{
+	cpu * cpu;
+	cpu = calloc(sizeof(cpu), 1);
+
+	/*Initialize regs*/
+	(cpu->regs).PC = 0xC000;
+	(cpu->regs).S = 0xFD;
+	(cpu->regs).A = 0;
+	(cpu->regs).X = 0;
+	(cpu->regs).Y = 0;
+	(cpu->regs).P = 0x24;
+
+	cpu->ram = calloc(RAM_SIZE, 1);
+	cpu->prg_rom = prg;
+
+	return cpu;
+}
+
+uint8_t cpu_read(cpu * cpu, uint16_t addr)
+{
+	switch(addr)
+	{
+		case 0x0000 ... 0x07FF:
+			return cpu->ram[addr];
+		case 0x8000 ... 0xFFFF:
+			return cpu->prg_rom[addr & 0x7FFF];
+		default:
+			printf("Invalid address: 0x%x\n", addr);
+			break;
+	}
+	return 0;
+}
+
+void cpu_write(cpu * cpu, uint16_t addr, uint8_t value)
+{
+	switch(addr)
+	{
+		case 0x0000 ... 0x07FF:
+			cpu->ram[addr] = value;
+		case 0x8000 ... 0xFFFF:
+			cpu->prg_rom[addr & 0x7FFF] = value;
+		default:
+			printf("Invalid address: 0x%x\n", addr);
+			break;
+	}
+	return;
+}
+
+void resetCPU(cpu * cpu)
+{
+	(cpu->regs).PC = cpu_read(cpu, 0xFFFC); /*Parte baja de PC*/
+	(cpu->regs).PC |= cpu_read(cpu, 0xFFFD) << 8; /*Parte añta de PC*/
+}
+
+void freeCPU(cpu * cpu)
+{
+	if(cpu == NULL)
+		return;
+	free(cpu->ram);
+	free(cpu);
+	return;
+}
+
+void printRegisters(cpu * cpu)
+{
+	printf("\nRegs\n");
+	printf("PC:\t0x%x\n", (cpu->regs).PC);
+	printf("S:\t0x%x\n", (cpu->regs).S);
+	printf("A:\t0x%x\n", (cpu->regs).A);
+	printf("X:\t0x%x\n", (cpu->regs).X);
+	printf("Y:\t0x%x\n", (cpu->regs).Y);
+	printf("P:\t0x%x\n\n", (cpu->regs).P);
 }
 
 

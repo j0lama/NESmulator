@@ -6,23 +6,28 @@
 
 int main(int argc, char const *argv[])
 {
-	unsigned char * code;
+	uint8_t code;
 	char string[10];
 	const instruction * ins;
 	int length = 0;
 	nes_cart * cart;
+	cpu * cpu;
 
 
 	cart = load_cart(argv[1]);
 	if(cart == NULL)
 		return 1;
-	code = cart->prg_rom + 0x0000FFFC;
+
+	/*CPU initialization*/
+	cpu = initCPU(cart->prg_rom);
+	/*Reset the PC*/
+	resetCPU(cpu);
+
 	while(1)
 	{
 		scanf("%s", string);
-		printf("PC: 0x%x\n", (unsigned int)code);
-		printf("Readed: 0x%x\n", *code);
-		ins = getInstruction(*code);
+		code = cpu_read(cpu, (cpu->regs).PC);
+		ins = getInstruction(code);
 		if(ins == NULL)
 		{
 			printf("Invalid operation\n");
@@ -30,10 +35,13 @@ int main(int argc, char const *argv[])
 		}
 		else
 		{
+			#ifdef _DEBUG
+			printRegisters(cpu);
 			printOpcode(ins);
+			#endif
 			length = getInstructionLength(ins);
 		}
-		code += length;
+		(cpu->regs).PC += length;
 	}
 	return 0;
 }
