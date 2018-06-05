@@ -8,7 +8,7 @@ struct _instruction
 	char * auxSignature;
 	int length;
 	uint8_t code;
-	void * execute;
+	void (*execute) (cpu * cpu);
 };
 
 
@@ -271,13 +271,6 @@ const instruction * getInstruction(uint8_t opcode)
 	return NULL;
 }
 
-int getInstructionLength(const instruction * ins)
-{
-	if(ins == NULL)
-		return 0;
-	return ins->length;
-}
-
 void printOpcode(const instruction * ins)
 {
 	printf("Signature:\t%s\n", ins->signature);
@@ -331,6 +324,40 @@ void cpu_write(cpu * cpu, uint16_t addr, uint8_t value)
 		default:
 			printf("Invalid address: 0x%x\n", addr);
 			break;
+	}
+	return;
+}
+
+void cpu_execute(cpu * cpu)
+{
+	uint8_t code;
+	const instruction * ins;
+
+	/*Read instruction*/
+	code = cpu_read(cpu, (cpu->regs).PC);
+	/*Get the detailed instruction*/
+	ins = getInstruction(code);
+
+	if(ins == NULL)
+	{
+		printf("Invalid operation\n");
+		(cpu->regs).PC += 1;
+	}
+	else
+	{
+		#ifdef _DEBUG
+		printRegisters(cpu);
+		printOpcode(ins);
+		#endif
+
+		/*Exectue function*/
+		if(ins->execute == NULL)
+			printf("Unimplemented function\n\n");
+		else
+			ins->execute(cpu);
+
+		/*Next instruction*/
+		(cpu->regs).PC += ins->length;
 	}
 	return;
 }

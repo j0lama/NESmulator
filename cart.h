@@ -5,7 +5,6 @@
 
 struct _nes_cart
 {
-	char * name;
 	size_t prg_size;
 	size_t chr_size;
 	int region;
