@@ -16,9 +16,16 @@ struct _instruction
 
 #define RAM_SIZE 0x800
 
+/*Private functions*/
+void printRegisters(cpu * cpu);
+const instruction * getInstruction(uint8_t opcode);
+uint8_t cpu_read(cpu * cpu, uint16_t addr);
+void cpu_write(cpu * cpu, uint16_t addr, uint8_t value);
+void printRegisters(cpu * cpu);
+
+
 /*Opcodes*/
 /*http://problemkaputt.de/everynes.htm#cpu65xxmicroprocessor*/
-
 
 const instruction instructions[256] = {
 	/////////////////////////////////////
