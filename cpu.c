@@ -339,7 +339,7 @@ cpu * initCPU(uint8_t * prg)
 	cpu = calloc(sizeof(cpu), 1);
 
 	/*Initialize regs*/
-	(cpu->regs).PC = 0xC000;
+	(cpu->regs).PC = 0x0000;
 	(cpu->regs).S = 0xFD;
 	(cpu->regs).A = 0;
 	(cpu->regs).X = 0;
@@ -734,7 +734,18 @@ void sta__nnnn(cpu * cpu) //[nnnn]=A Clk=4
 	return;
 }
 
-void sta__nnnn_X(cpu * cpu); //[nnnn+X]=A Clk=5
+void sta__nnnn_X(cpu * cpu) //[nnnn+X]=A Clk=5
+{
+	uint8_t valueLow, valueHigh;
+	uint16_t addr = 0;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr + (cpu->regs).X, (cpu->regs).A);
+	return;
+}
+
 void sta__nnnn_Y(cpu * cpu); //[nnnn+Y]=A Clk=5
 void sta___nn_X(cpu * cpu); //[WORD[nn+x]]=A Clk=6
 void sta___nn_Y(cpu * cpu); //[WORD[nn]+y]=A Clk=6
