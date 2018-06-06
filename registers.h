@@ -1,4 +1,4 @@
-struct registers
+typedef struct _registers
 {
 	unsigned short PC; /*Program Counter*/
 	unsigned char S; /*Stack*/
@@ -6,7 +6,8 @@ struct registers
 	unsigned char X;
 	unsigned char Y;
 	unsigned char P;
-} extern registers;
+} registers;
+
 
 #define FLAG_CARRY (1)
 #define FLAG_ZERO (1 << 1)

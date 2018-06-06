@@ -5,7 +5,6 @@
 
 struct _nes_cart
 {
-	char * name;
 	size_t prg_size;
 	size_t chr_size;
 	int region;
@@ -15,11 +14,11 @@ struct _nes_cart
 	int multiplier;
 	uint8_t * prg_rom;
 	uint8_t * chr_rom;
-	uint8_t *prg_pages[32];
 };
 
 typedef struct _nes_cart nes_cart;
 
 nes_cart * load_cart(const char * path);
+void freeCart(nes_cart * cart);
 
 #endif

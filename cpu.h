@@ -1,7 +1,21 @@
 #include <stdio.h>
+#include <stdint.h>
+
+#include "registers.h"
+
+typedef struct _cpu
+{
+	registers regs;
+	uint8_t * ram;
+	uint8_t * prg_rom;
+} cpu;
 
 typedef struct _instruction instruction;
 
-const instruction * getInstruction(unsigned char opcode);
-int getInstructionLength(const instruction * ins);
-void printOpcode(const instruction * ins);
+cpu * initCPU(uint8_t * prg);
+void cpu_execute(cpu * cpu);
+void resetCPU(cpu * cpu);
+void freeCPU(cpu * cpu);
+
+void printPCMemory(cpu * cpu);
+void printRegisters(cpu * cpu);

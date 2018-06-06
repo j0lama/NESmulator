@@ -62,7 +62,7 @@ nes_cart * load_cart(const char * path)
 		printf("Mirroring:\tHorizontal\n");
 	#endif
 
-	/*Allocating memory*/
+	/*Allocating memory for prg_rom*/
 	if (cart->prg_size == 0x4000)
 	{
 		cart->prg_rom = malloc(0x8000);
@@ -82,12 +82,6 @@ nes_cart * load_cart(const char * path)
 		memcpy(&cart->prg_rom[0x4000], cart->prg_rom, 0x4000);
 	}
 
-	for (int i = 0; i < cart->prg_size / 0x4000; i++) {
-		fprintf(stderr, "Time %i\n", i);
-		cart->prg_pages[i] = &cart->prg_rom[0x4000 * i];
-	}
-	fprintf(stderr, "0 %x\n", cart->prg_pages[0][0]);
-
 	//if CHR rom is present, allocate memory for it
 	if (cart->chr_size > 0)
 	{
@@ -97,4 +91,15 @@ nes_cart * load_cart(const char * path)
 
 	fclose(file);
 	return cart;
+}
+
+void freeCart(nes_cart * cart)
+{
+	if(cart == NULL)
+		return;
+	free(cart->prg_rom);
+	if(cart->chr_size > 0)
+		free(cart->chr_rom);
+	free(cart);
+	return;
 }

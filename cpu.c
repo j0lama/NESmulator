@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "cpu.h"
 
 
@@ -6,48 +8,93 @@ struct _instruction
 	char * signature;
 	char * auxSignature;
 	int length;
-	unsigned char code;
-	void * execute;
+	uint8_t code;
+	void (*execute) (cpu * cpu);
 };
 
 
 #define OPNUM 151
+
+#define RAM_SIZE 0x800
+
+/*Private functions*/
+void printRegisters(cpu * cpu);
+const instruction * getInstruction(uint8_t opcode);
+uint8_t cpu_read(cpu * cpu, uint16_t addr);
+void cpu_write(cpu * cpu, uint16_t addr, uint8_t value);
+void printRegisters(cpu * cpu);
+
+/*Instruction functions*/
+void tay(cpu * cpu);
+void tax(cpu * cpu);
+void tsx(cpu * cpu);
+void tya(cpu * cpu);
+void txa(cpu * cpu);
+void txs(cpu * cpu);
+void lda_nn(cpu * cpu);
+void ldx_nn(cpu * cpu);
+void ldy_nn(cpu * cpu);
+
+
+/*INSTRUCCIONES A REVISAR EL FUNCIONAMIENTO*/
+
+void lda__nn(cpu * cpu);
+void lda__nn_X(cpu * cpu);
+void lda__nnnn(cpu * cpu);
+void lda__nnnn_X(cpu * cpu);
+void lda__nnnn_Y(cpu * cpu);
+void lda___nnnn_X(cpu * cpu);
+void lda___nnnn__Y(cpu * cpu);
+
+void ldx__nn(cpu * cpu);
+void ldx__nn_Y(cpu * cpu);
+void ldx__nnnn(cpu * cpu);
+void ldx__nnnn_Y(cpu * cpu);
+
+void ldy__nn(cpu * cpu);
+void ldy__nn_X(cpu * cpu);
+void ldy__nnnn(cpu * cpu);
+void ldy__nnnn_X(cpu * cpu);
+
+
+
 /*Opcodes*/
 /*http://problemkaputt.de/everynes.htm#cpu65xxmicroprocessor*/
-
 
 const instruction instructions[256] = {
 	/////////////////////////////////////
 	//CPU Memory and Register Transfers//
 	/////////////////////////////////////
 	//Register/Immeditate to Register Transfer
-	{"TAY", "MOV Y,A", 1, 0xA8, NULL}, //Y=A Clk=2
-	{"TAX", "MOV X,A", 1, 0xAA, NULL}, //X=A Clk=2
-	{"TSX", "MOV X,S", 1, 0xBA, NULL}, //X=S Clk=2
-	{"TYA", "MOV A,Y", 1, 0x98, NULL}, //A=Y Clk=2
-	{"TXA", "MOV A,X", 1, 0x8A, NULL}, //A=X Clk=2
-	{"TXS", "MOV S,X", 1, 0x9A, NULL}, //S=X Clk=2
-	{"LDA #nn", "MOV A,nn", 2, 0xA9, NULL}, //A=nn Clk=2
-	{"LDX #nn", "MOV X,nn", 2, 0xA2, NULL}, //X=nn Clk=2
-	{"LDY #nn", "MOV Y,nn", 2, 0xA0, NULL}, //Y=nn Clk=2
+	{"TAY", "MOV Y,A", 1, 0xA8, tay}, //Y=A Clk=2
+	{"TAX", "MOV X,A", 1, 0xAA, tax}, //X=A Clk=2
+	{"TSX", "MOV X,S", 1, 0xBA, tsx}, //X=S Clk=2
+	{"TYA", "MOV A,Y", 1, 0x98, tya}, //A=Y Clk=2
+	{"TXA", "MOV A,X", 1, 0x8A, txa}, //A=X Clk=2
+	{"TXS", "MOV S,X", 1, 0x9A, txs}, //S=X Clk=2
+	{"LDA #nn", "MOV A,nn", 2, 0xA9, lda_nn}, //A=nn Clk=2
+	{"LDX #nn", "MOV X,nn", 2, 0xA2, ldx_nn}, //X=nn Clk=2
+	{"LDY #nn", "MOV Y,nn", 2, 0xA0, ldy_nn}, //Y=nn Clk=2
 
 	//Load Register from Memory
 	//* Add one cycle if indexing crosses a page boundary.
-	{"LDA nn", "MOV A,[nn]", 2, 0xA5, NULL}, //A=[nn] Clk=3
-	{"LDA nn,X", "MOV A,[nn+X]", 2, 0xB5, NULL}, //A=[nn+X] Clk=4
-	{"LDA nnnn", "MOV A,[nnnn]", 3, 0xAD, NULL}, //A=[nnnn] Clk=4
-	{"LDA nnnn,X", "MOV A,[nnnn+X]", 3, 0xBD, NULL}, //A=[nnnn+X] Clk=5
-	{"LDA nnnn,Y", "MOV A,[nnnn+Y]", 3, 0xB9, NULL}, //A=[nnnn+Y] Clk=5
-	{"LDA (nn,X)", "MOV A,[[nn+X]]", 2, 0xA1, NULL}, //=[WORD[nn+X]] Clk=6
-	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, NULL}, //A=[WORD[nn]+Y] Clk=6
-	{"LDX nn", "MOV X,[nn]", 2, 0xA6, NULL}, //X=[nn] Clk=3
-	{"LDX nn,Y", "MOV X,[nn+Y]", 2, 0xB6, NULL}, //X=[nn+Y] Clk=4
-	{"LDX nnnn", "MOV X,[nnnn]", 3, 0xAE, NULL}, //X=[nnnn] Clk=4
-	{"LDX nnnn,Y", "MOV X,[nnnn+Y]", 3, 0xBE, NULL}, //X=[nnnn+Y] Clk=4*
-	{"LDY nn", "MOV Y,[nn]", 2, 0xA4, NULL}, //Y=[nn] Clk=3
-	{"LDY nn,X", "MOV Y,[nn+X]", 2, 0xB4, NULL}, //Y=[nn+X] Clk=4
-	{"LDY nnnn", "MOV Y,[nnnn]", 3, 0xAC, NULL}, //Y=[nnnn] Clk=4
-	{"LDY nnnn,X", "MOV Y,[nnnn+X]", 3, 0xBC, NULL}, //;Y=[nnnn+X] Clk=4*
+	{"LDA nn", "MOV A,[nn]", 2, 0xA5, lda__nn}, //A=[nn] Clk=3
+	{"LDA nn,X", "MOV A,[nn+X]", 2, 0xB5, lda__nn_X}, //A=[nn+X] Clk=4
+	{"LDA nnnn", "MOV A,[nnnn]", 3, 0xAD, lda__nnnn}, //A=[nnnn] Clk=4
+	{"LDA nnnn,X", "MOV A,[nnnn+X]", 3, 0xBD, lda__nnnn_X}, //A=[nnnn+X] Clk=5
+	{"LDA nnnn,Y", "MOV A,[nnnn+Y]", 3, 0xB9, lda__nnnn_Y}, //A=[nnnn+Y] Clk=5
+	{"LDA (nn,X)", "MOV A,[[nn+X]]", 2, 0xA1, lda___nnnn_X}, //A=[WORD[nn+X]] Clk=6
+	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, lda___nnnn__Y}, //A=[WORD[nn]+Y] Clk=6
+
+	{"LDX nn", "MOV X,[nn]", 2, 0xA6, ldx__nn}, //X=[nn] Clk=3
+	{"LDX nn,Y", "MOV X,[nn+Y]", 2, 0xB6, ldx__nn_Y}, //X=[nn+Y] Clk=4
+	{"LDX nnnn", "MOV X,[nnnn]", 3, 0xAE, ldx__nnnn}, //X=[nnnn] Clk=4
+	{"LDX nnnn,Y", "MOV X,[nnnn+Y]", 3, 0xBE, ldx__nnnn_Y}, //X=[nnnn+Y] Clk=4*
+
+	{"LDY nn", "MOV Y,[nn]", 2, 0xA4, ldy__nn}, //Y=[nn] Clk=3
+	{"LDY nn,X", "MOV Y,[nn+X]", 2, 0xB4, ldy__nn_X}, //Y=[nn+X] Clk=4
+	{"LDY nnnn", "MOV Y,[nnnn]", 3, 0xAC, ldy__nnnn}, //Y=[nnnn] Clk=4
+	{"LDY nnnn,X", "MOV Y,[nnnn+X]", 3, 0xBC, ldy__nnnn_X}, //;Y=[nnnn+X] Clk=4*
 
 	//Store Register in Memory
 	{"STA nn", "MOV [nn],A", 2, 0x85, NULL}, //[nn]=A Clk=3
@@ -256,7 +303,7 @@ const instruction instructions[256] = {
 	//TODO
 };
 
-const instruction * getInstruction(unsigned char opcode)
+const instruction * getInstruction(uint8_t opcode)
 {
 	int i = 0;
 	for(i = 0; i < OPNUM; i++)
@@ -267,20 +314,372 @@ const instruction * getInstruction(unsigned char opcode)
 	return NULL;
 }
 
-int getInstructionLength(const instruction * ins)
-{
-	if(ins == NULL)
-		return 0;
-	return ins->length;
-}
-
 void printOpcode(const instruction * ins)
 {
-	printf("Signature:\t%s\n", ins->signature);
-	printf("80x86:\t%s\n", ins->auxSignature);
+	printf("Hex:\t0x%x\n", ins->code);
+	printf("Instruction:\t%s or %s\n", ins->signature, ins->auxSignature);
 	printf("Length:\t%d\n", ins->length);
-	printf("Code:\t0x%x\n", ins->code);
 }
+
+cpu * initCPU(uint8_t * prg)
+{
+	cpu * cpu;
+	cpu = calloc(sizeof(cpu), 1);
+
+	/*Initialize regs*/
+	(cpu->regs).PC = 0xC000;
+	(cpu->regs).S = 0xFD;
+	(cpu->regs).A = 0;
+	(cpu->regs).X = 0;
+	(cpu->regs).Y = 0;
+	(cpu->regs).P = 0x24;
+
+	cpu->ram = calloc(RAM_SIZE, 1);
+	cpu->prg_rom = prg;
+
+	return cpu;
+}
+
+uint8_t cpu_read(cpu * cpu, uint16_t addr)
+{
+	switch(addr)
+	{
+		case 0x0000 ... 0x07FF:
+			return cpu->ram[addr];
+		case 0x8000 ... 0xFFFF:
+			return cpu->prg_rom[addr & 0x7FFF];
+		default:
+			printf("Invalid address: 0x%x\n", addr);
+			break;
+	}
+	return 0;
+}
+
+void cpu_write(cpu * cpu, uint16_t addr, uint8_t value)
+{
+	switch(addr)
+	{
+		case 0x0000 ... 0x07FF:
+			cpu->ram[addr] = value;
+		case 0x8000 ... 0xFFFF:
+			cpu->prg_rom[addr & 0x7FFF] = value;
+		default:
+			printf("Invalid address: 0x%x\n", addr);
+			break;
+	}
+	return;
+}
+
+void cpu_execute(cpu * cpu)
+{
+	uint8_t code;
+	const instruction * ins;
+
+	/*Read instruction*/
+	code = cpu_read(cpu, (cpu->regs).PC);
+	/*Get the detailed instruction*/
+	ins = getInstruction(code);
+
+	if(ins == NULL)
+	{
+		printf("Invalid operation\n");
+		(cpu->regs).PC += 1;
+	}
+	else
+	{
+		#ifdef _DEBUG
+		printOpcode(ins);
+		#endif
+
+		/*Exectue function*/
+		if(ins->execute == NULL)
+			printf("Unimplemented function\n");
+		else
+			ins->execute(cpu);
+
+		/*Next instruction*/
+		(cpu->regs).PC += ins->length;
+	}
+	return;
+}
+
+void resetCPU(cpu * cpu)
+{
+	(cpu->regs).PC = cpu_read(cpu, 0xFFFC); /*Parte baja de PC*/
+	(cpu->regs).PC |= cpu_read(cpu, 0xFFFD) << 8; /*Parte añta de PC*/
+}
+
+void freeCPU(cpu * cpu)
+{
+	if(cpu == NULL)
+		return;
+	free(cpu->ram);
+	free(cpu);
+	return;
+}
+
+void printRegisters(cpu * cpu)
+{
+	printf("PC:\t0x%x\n", (cpu->regs).PC);
+	printf("S:\t0x%x\n", (cpu->regs).S);
+	printf("A:\t0x%x\n", (cpu->regs).A);
+	printf("X:\t0x%x\n", (cpu->regs).X);
+	printf("Y:\t0x%x\n", (cpu->regs).Y);
+	printf("P:\t0x%x\n", (cpu->regs).P);
+}
+
+void printPCMemory(cpu * cpu)
+{
+	int i = 0;
+	printf("PC Memory: ");
+	for(i = 0; i < 16; i++)
+		printf("%x ", cpu_read(cpu, (cpu->regs).PC+i));
+	printf("\n");
+	return;
+}
+
+void tay(cpu * cpu)
+{
+	/*Clk = 2*/
+	(cpu->regs).Y = (cpu->regs).A;
+	return;
+}
+
+void tax(cpu * cpu)
+{
+	/*Clk = 2*/
+	(cpu->regs).X = (cpu->regs).A;
+	return;
+}
+
+void tsx(cpu * cpu)
+{
+	/*Cpu = 2*/
+	(cpu->regs).X = (cpu->regs).S;
+	return;
+}
+
+void tya(cpu * cpu)
+{
+	/*Clk = 2*/
+	(cpu->regs).A = (cpu->regs).Y;
+	return;
+}
+
+void txa(cpu * cpu)
+{
+	/*Clk = 2*/
+	(cpu->regs).A = (cpu->regs).X;
+	return;
+}
+
+void txs(cpu * cpu)
+{
+	/*Clk = 2*/
+	(cpu->regs).S = (cpu->regs).X;
+	return;
+}
+
+void lda_nn(cpu * cpu)
+{
+	/*Clk = 2*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).A = value; /*Inmediate Addressing*/
+	return;
+}
+
+void ldx_nn(cpu * cpu)
+{
+	/*Clk = 2*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).X = value; /*Inmediate Addressing*/
+	return;
+}
+
+void ldy_nn(cpu * cpu)
+{
+	/*Clk = 2*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).Y = value; /*Inmediate Addressing*/
+	return;
+}
+
+void lda__nn(cpu * cpu)
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).A = cpu_read(cpu, value); /*Zero Page Addressing*/
+	return;
+}
+
+void lda__nn_X(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).A = cpu_read(cpu, value + (cpu->regs).X); /*Zero Page Addressing*/
+	return;
+}
+
+void lda__nnnn(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).A = cpu_read(cpu, addr); /*Absolute Addressing*/
+	return;
+}
+
+void lda__nnnn_X(cpu * cpu)
+{
+	/*Clk = 5*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).A = cpu_read(cpu, addr + (cpu->regs).X); /*Absolute Addressing*/
+	return;
+}
+
+void lda__nnnn_Y(cpu * cpu)
+{
+	/*Clk = 5*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).A = cpu_read(cpu, addr + (cpu->regs).Y); /*Absolute Addressing*/
+	return;
+}
+
+void lda___nnnn_X(cpu * cpu)
+{
+	/*Clk = 6*/
+	uint8_t value, valueLow, valueHigh;
+	uint16_t addr;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueLow = cpu_read(cpu, value + (cpu->regs).X);
+	valueHigh = cpu_read(cpu, value + (cpu->regs).X + 1);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).A = cpu_read(cpu, addr); /*Indirect Absolute Addressing*/
+	return;
+}
+
+void lda___nnnn__Y(cpu * cpu)
+{
+	/*Clk = 6*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).A = cpu_read(cpu, addr + (cpu->regs).Y); /*Indirect Absolute Addressing*/
+	return;
+}
+
+void ldx__nn(cpu * cpu)
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).X = cpu_read(cpu, value); /*Zero Page Addressing*/
+	return;
+}
+
+void ldx__nn_Y(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).X = cpu_read(cpu, value + (cpu->regs).Y); /*Zero Page Addressing*/
+	return;
+}
+
+void ldx__nnnn(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).X = cpu_read(cpu, addr); /*Absolute Addressing*/
+	return;
+}
+
+void ldx__nnnn_Y(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).X = cpu_read(cpu, addr + (cpu->regs).Y); /*Absolute Addressing*/
+	return;
+}
+
+void ldy__nn(cpu * cpu)
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).Y = cpu_read(cpu, value); /*Zero Page Addressing*/
+	return;
+}
+
+void ldy__nn_X(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	(cpu->regs).Y = cpu_read(cpu, value + (cpu->regs).X); /*Zero Page Addressing*/
+	return;
+}
+
+void ldy__nnnn(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).Y = cpu_read(cpu, addr); /*Absolute Addressing*/
+	return;
+}
+
+void ldy__nnnn_X(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	(cpu->regs).Y = cpu_read(cpu, addr + (cpu->regs).X); /*Absolute Addressing*/
+	return;
+}
+
+
 
 
 
