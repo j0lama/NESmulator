@@ -82,6 +82,12 @@ nes_cart * load_cart(const char * path)
 		memcpy(&cart->prg_rom[0x4000], cart->prg_rom, 0x4000);
 	}
 
+	for (int i = 0; i < cart->prg_size / 0x4000; i++) {
+		fprintf(stderr, "Time %i\n", i);
+		cart->prg_pages[i] = &cart->prg_rom[0x4000 * i];
+	}
+	fprintf(stderr, "0 %x\n", cart->prg_pages[0][0]);
+
 	//if CHR rom is present, allocate memory for it
 	if (cart->chr_size > 0)
 	{
