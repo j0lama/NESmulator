@@ -43,18 +43,30 @@ void lda__nn_X(cpu * cpu);
 void lda__nnnn(cpu * cpu);
 void lda__nnnn_X(cpu * cpu);
 void lda__nnnn_Y(cpu * cpu);
-void lda___nnnn_X(cpu * cpu);
-void lda___nnnn__Y(cpu * cpu);
-
+void lda___nn_X(cpu * cpu);
+void lda___nn__Y(cpu * cpu);
 void ldx__nn(cpu * cpu);
 void ldx__nn_Y(cpu * cpu);
 void ldx__nnnn(cpu * cpu);
 void ldx__nnnn_Y(cpu * cpu);
-
 void ldy__nn(cpu * cpu);
 void ldy__nn_X(cpu * cpu);
 void ldy__nnnn(cpu * cpu);
 void ldy__nnnn_X(cpu * cpu);
+
+void sta__nn(cpu * cpu);
+void sta__nn_X(cpu * cpu);
+void sta__nnnn(cpu * cpu);
+void sta__nnnn_X(cpu * cpu);
+void sta__nnnn_Y(cpu * cpu);
+void sta___nn_X(cpu * cpu);
+void sta___nn_Y(cpu * cpu);
+void stx__nn(cpu * cpu);
+void stx__nn_Y(cpu * cpu);
+void stx__nnnn(cpu * cpu);
+void sty__nn(cpu * cpu);
+void sty__nn_X(cpu * cpu);
+void sty__nnnn(cpu * cpu);
 
 
 
@@ -83,8 +95,8 @@ const instruction instructions[256] = {
 	{"LDA nnnn", "MOV A,[nnnn]", 3, 0xAD, lda__nnnn}, //A=[nnnn] Clk=4
 	{"LDA nnnn,X", "MOV A,[nnnn+X]", 3, 0xBD, lda__nnnn_X}, //A=[nnnn+X] Clk=5
 	{"LDA nnnn,Y", "MOV A,[nnnn+Y]", 3, 0xB9, lda__nnnn_Y}, //A=[nnnn+Y] Clk=5
-	{"LDA (nn,X)", "MOV A,[[nn+X]]", 2, 0xA1, lda___nnnn_X}, //A=[WORD[nn+X]] Clk=6
-	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, lda___nnnn__Y}, //A=[WORD[nn]+Y] Clk=6
+	{"LDA (nn,X)", "MOV A,[[nn+X]]", 2, 0xA1, lda___nn_X}, //A=[WORD[nn+X]] Clk=6
+	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, lda___nn__Y}, //A=[WORD[nn]+Y] Clk=6
 
 	{"LDX nn", "MOV X,[nn]", 2, 0xA6, ldx__nn}, //X=[nn] Clk=3
 	{"LDX nn,Y", "MOV X,[nn+Y]", 2, 0xB6, ldx__nn_Y}, //X=[nn+Y] Clk=4
@@ -542,7 +554,7 @@ void lda__nnnn(cpu * cpu)
 {
 	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -555,7 +567,7 @@ void lda__nnnn_X(cpu * cpu)
 {
 	/*Clk = 5*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -568,7 +580,7 @@ void lda__nnnn_Y(cpu * cpu)
 {
 	/*Clk = 5*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -577,11 +589,11 @@ void lda__nnnn_Y(cpu * cpu)
 	return;
 }
 
-void lda___nnnn_X(cpu * cpu)
+void lda___nn_X(cpu * cpu)
 {
 	/*Clk = 6*/
 	uint8_t value, valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	value = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueLow = cpu_read(cpu, value + (cpu->regs).X);
 	valueHigh = cpu_read(cpu, value + (cpu->regs).X + 1);
@@ -591,11 +603,11 @@ void lda___nnnn_X(cpu * cpu)
 	return;
 }
 
-void lda___nnnn__Y(cpu * cpu)
+void lda___nn__Y(cpu * cpu)
 {
 	/*Clk = 6*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -626,7 +638,7 @@ void ldx__nnnn(cpu * cpu)
 {
 	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -639,7 +651,7 @@ void ldx__nnnn_Y(cpu * cpu)
 {
 	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -670,7 +682,7 @@ void ldy__nnnn(cpu * cpu)
 {
 	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -683,7 +695,7 @@ void ldy__nnnn_X(cpu * cpu)
 {
 	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
-	uint16_t addr;
+	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
 	addr = valueLow;
@@ -692,7 +704,46 @@ void ldy__nnnn_X(cpu * cpu)
 	return;
 }
 
+void sta__nn(cpu * cpu)
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value, (cpu->regs).A);
+	return;
+}
 
+void sta__nn_X(cpu * cpu)
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value + (cpu->regs).X, (cpu->regs).A);
+	return;
+}
+
+void sta__nnnn(cpu * cpu) //[nnnn]=A Clk=4
+{
+	uint8_t valueLow, valueHigh;
+	uint16_t addr = 0;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr, (cpu->regs).A);
+	return;
+}
+
+void sta__nnnn_X(cpu * cpu); //[nnnn+X]=A Clk=5
+void sta__nnnn_Y(cpu * cpu); //[nnnn+Y]=A Clk=5
+void sta___nn_X(cpu * cpu); //[WORD[nn+x]]=A Clk=6
+void sta___nn_Y(cpu * cpu); //[WORD[nn]+y]=A Clk=6
+void stx__nn(cpu * cpu); //[nn]=X Clk=3
+void stx__nn_Y(cpu * cpu); //[nn+Y]=X Clk=4
+void stx__nnnn(cpu * cpu); //[nnnn]=X Clk=4
+void sty__nn(cpu * cpu); //[nn]=Y Clk=3
+void sty__nn_X(cpu * cpu); //[nn+X]=Y Clk=4
+void sty__nnnn(cpu * cpu); //[nnnn]=Y Clk=4
 
 
 
