@@ -19,3 +19,4 @@ void freeCPU(cpu * cpu);
 
 void printPCMemory(cpu * cpu);
 void printRegisters(cpu * cpu);
+void printMemory(cpu * cpu, uint16_t addr);

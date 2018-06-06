@@ -438,6 +438,19 @@ void printPCMemory(cpu * cpu)
 	return;
 }
 
+void printMemory(cpu * cpu, uint16_t addr)
+{
+	int i = 0;
+	printf("Memory: ");
+	for(i = 0; i < 16; i++)
+		printf("%x ", cpu_read(cpu, addr + i));
+	printf("\n");
+	return;
+}
+
+
+/*Instruction functions*/
+
 void tay(cpu * cpu)
 {
 	/*Clk = 2*/

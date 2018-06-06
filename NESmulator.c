@@ -10,6 +10,7 @@ int main(int argc, char const *argv[])
 	char string[20];
 	nes_cart * cart;
 	cpu * cpu;
+	uint16_t addr;
 
 
 	cart = load_cart(argv[1]);
@@ -44,12 +45,19 @@ int main(int argc, char const *argv[])
 			freeCart(cart);
 			break;
 		}
+		else if(string[0] == 'm')
+		{
+			addr = strtol(string+2, NULL, 16);
+			printf("0x%x\n", addr);
+			printMemory(cpu, addr);
+		}
 		else
 		{
 			printf("Commands:\n");
 			printf("\tpc:\tprint pc memory\n");
 			printf("\tr:\tprint registers\n");
 			printf("\tn:\texecute next instruction\n");
+			printf("\tm addr:\tprint addr memory\n");
 			printf("\tq:\texit\n");
 		}
 	}
