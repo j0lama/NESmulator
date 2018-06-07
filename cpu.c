@@ -44,7 +44,7 @@ void lda__nnnn(cpu * cpu);
 void lda__nnnn_X(cpu * cpu);
 void lda__nnnn_Y(cpu * cpu);
 void lda___nn_X(cpu * cpu);
-void lda___nn__Y(cpu * cpu);
+void lda___nn_Y(cpu * cpu);
 void ldx__nn(cpu * cpu);
 void ldx__nn_Y(cpu * cpu);
 void ldx__nnnn(cpu * cpu);
@@ -67,6 +67,11 @@ void stx__nnnn(cpu * cpu);
 void sty__nn(cpu * cpu);
 void sty__nn_X(cpu * cpu);
 void sty__nnnn(cpu * cpu);
+
+void pha(cpu * cpu);
+void php(cpu * cpu);
+void pla(cpu * cpu);
+void plp(cpu * cpu);
 
 
 
@@ -96,7 +101,7 @@ const instruction instructions[256] = {
 	{"LDA nnnn,X", "MOV A,[nnnn+X]", 3, 0xBD, lda__nnnn_X}, //A=[nnnn+X] Clk=5
 	{"LDA nnnn,Y", "MOV A,[nnnn+Y]", 3, 0xB9, lda__nnnn_Y}, //A=[nnnn+Y] Clk=5
 	{"LDA (nn,X)", "MOV A,[[nn+X]]", 2, 0xA1, lda___nn_X}, //A=[WORD[nn+X]] Clk=6
-	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, lda___nn__Y}, //A=[WORD[nn]+Y] Clk=6
+	{"LDA (nn),Y", "MOV A,[[nn]+Y]", 2, 0xB1, lda___nn_Y}, //A=[WORD[nn]+Y] Clk=6
 
 	{"LDX nn", "MOV X,[nn]", 2, 0xA6, ldx__nn}, //X=[nn] Clk=3
 	{"LDX nn,Y", "MOV X,[nn+Y]", 2, 0xB6, ldx__nn_Y}, //X=[nn+Y] Clk=4
@@ -109,19 +114,19 @@ const instruction instructions[256] = {
 	{"LDY nnnn,X", "MOV Y,[nnnn+X]", 3, 0xBC, ldy__nnnn_X}, //;Y=[nnnn+X] Clk=4*
 
 	//Store Register in Memory
-	{"STA nn", "MOV [nn],A", 2, 0x85, NULL}, //[nn]=A Clk=3
-	{"STA nn,X", "MOV [nn+X],A", 2, 0x95, NULL}, //[nn+X]=A Clk=4
-	{"STA nnnn", "MOV [nnnn],A", 3, 0x8D, NULL}, //[nnnn]=A Clk=4
-	{"STA nnnn,X", "MOV [nnnn+X],A", 3, 0x9D, NULL}, //[nnnn+X]=A Clk=5
-	{"STA nnnn,Y", "MOV [nnnn+Y],A", 3, 0x99, NULL}, //[nnnn+Y]=A Clk=5
-	{"STA (nn,X)", "MOV [[nn+x]],A", 2, 0x81, NULL}, //[WORD[nn+x]]=A Clk=6
-	{"STA (nn),Y", "MOV [[nn]+y],A", 2, 0x91, NULL}, //[WORD[nn]+y]=A Clk=6
-	{"STX nn", "MOV [nn],X", 2, 0x86, NULL}, //[nn]=X Clk=3
-	{"STX nn,Y", "MOV [nn+Y],X", 2, 0x96, NULL}, //[nn+Y]=X Clk=4
-	{"STX nnnn", "MOV [nnnn],X", 3, 0x8E, NULL}, //[nnnn]=X Clk=4
-	{"STY nn", "MOV [nn],Y", 2, 0x84, NULL}, //[nn]=Y Clk=3
-	{"STY nn,X", "MOV [nn+X],Y", 2, 0x94, NULL}, //[nn+X]=Y Clk=4
-	{"STY nnnn", "MOV [nnnn],Y", 3, 0x8C, NULL}, //[nnnn]=Y Clk=4
+	{"STA nn", "MOV [nn],A", 2, 0x85, sta__nn}, //[nn]=A Clk=3
+	{"STA nn,X", "MOV [nn+X],A", 2, 0x95, sta__nn_X}, //[nn+X]=A Clk=4
+	{"STA nnnn", "MOV [nnnn],A", 3, 0x8D, sta__nnnn}, //[nnnn]=A Clk=4
+	{"STA nnnn,X", "MOV [nnnn+X],A", 3, 0x9D, sta__nnnn_X}, //[nnnn+X]=A Clk=5
+	{"STA nnnn,Y", "MOV [nnnn+Y],A", 3, 0x99, sta__nnnn_Y}, //[nnnn+Y]=A Clk=5
+	{"STA (nn,X)", "MOV [[nn+x]],A", 2, 0x81, sta___nn_X}, //[WORD[nn+x]]=A Clk=6
+	{"STA (nn),Y", "MOV [[nn]+y],A", 2, 0x91, sta___nn_Y}, //[WORD[nn]+y]=A Clk=6
+	{"STX nn", "MOV [nn],X", 2, 0x86, stx__nn}, //[nn]=X Clk=3
+	{"STX nn,Y", "MOV [nn+Y],X", 2, 0x96, stx__nn_Y}, //[nn+Y]=X Clk=4
+	{"STX nnnn", "MOV [nnnn],X", 3, 0x8E, stx__nnnn}, //[nnnn]=X Clk=4
+	{"STY nn", "MOV [nn],Y", 2, 0x84, sty__nn}, //[nn]=Y Clk=3
+	{"STY nn,X", "MOV [nn+X],Y", 2, 0x94, sty__nn_X}, //[nn+X]=Y Clk=4
+	{"STY nnnn", "MOV [nnnn],Y", 3, 0x8C, sty__nnnn}, //[nnnn]=Y Clk=4
 
 	//Push/Pull
 	//Notes: PLA sets Z and N according to content of A. The B-flag and unused flags cannot be changed by PLP, these flags are always written as "1" by PHP.
@@ -603,7 +608,7 @@ void lda___nn_X(cpu * cpu)
 	return;
 }
 
-void lda___nn__Y(cpu * cpu)
+void lda___nn_Y(cpu * cpu)
 {
 	/*Clk = 6*/
 	uint8_t valueLow, valueHigh;
@@ -724,6 +729,7 @@ void sta__nn_X(cpu * cpu)
 
 void sta__nnnn(cpu * cpu) //[nnnn]=A Clk=4
 {
+	/*Clk = 4*/
 	uint8_t valueLow, valueHigh;
 	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
@@ -736,6 +742,7 @@ void sta__nnnn(cpu * cpu) //[nnnn]=A Clk=4
 
 void sta__nnnn_X(cpu * cpu) //[nnnn+X]=A Clk=5
 {
+	/*Clk = 5*/
 	uint8_t valueLow, valueHigh;
 	uint16_t addr = 0;
 	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
@@ -746,17 +753,117 @@ void sta__nnnn_X(cpu * cpu) //[nnnn+X]=A Clk=5
 	return;
 }
 
-void sta__nnnn_Y(cpu * cpu); //[nnnn+Y]=A Clk=5
-void sta___nn_X(cpu * cpu); //[WORD[nn+x]]=A Clk=6
-void sta___nn_Y(cpu * cpu); //[WORD[nn]+y]=A Clk=6
-void stx__nn(cpu * cpu); //[nn]=X Clk=3
-void stx__nn_Y(cpu * cpu); //[nn+Y]=X Clk=4
-void stx__nnnn(cpu * cpu); //[nnnn]=X Clk=4
-void sty__nn(cpu * cpu); //[nn]=Y Clk=3
-void sty__nn_X(cpu * cpu); //[nn+X]=Y Clk=4
-void sty__nnnn(cpu * cpu); //[nnnn]=Y Clk=4
+void sta__nnnn_Y(cpu * cpu) //[nnnn+Y]=A Clk=5
+{
+	/*Clk = 5*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr = 0;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr + (cpu->regs).Y, (cpu->regs).A);
+	return;
+}
 
+void sta___nn_X(cpu * cpu) //[WORD[nn+x]]=A Clk=6
+{
+	/*Clk = 6*/
+	uint8_t value, valueLow, valueHigh;
+	uint16_t addr = 0;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueLow = cpu_read(cpu, value + (cpu->regs).X);
+	valueHigh = cpu_read(cpu, value + (cpu->regs).X + 1);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr, (cpu->regs).A);
+	return;
+}
 
+void sta___nn_Y(cpu * cpu) //[WORD[nn]+y]=A Clk=6
+{
+	/*Clk = 6*/
+	uint8_t value, valueLow, valueHigh;
+	uint16_t addr = 0;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueLow = cpu_read(cpu, value);
+	valueHigh = cpu_write(cpu, value + 1);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr + (cpu->regs).Y, (cpu->regs).A);
+	return;
+}
+
+void stx__nn(cpu * cpu) //[nn]=X Clk=3
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value, (cpu->regs).X);
+	return;
+}
+
+void stx__nn_Y(cpu * cpu) //[nn+Y]=X Clk=4
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value + (cpu->regs).Y, (cpu->regs).X);
+	return;
+}
+
+void stx__nnnn(cpu * cpu) //[nnnn]=X Clk=4
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr = 0;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr, (cpu->regs).X);
+	return;
+}
+
+void sty__nn(cpu * cpu) //[nn]=Y Clk=3
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value, (cpu->regs).Y);
+	return;
+}
+
+void sty__nn_X(cpu * cpu) //[nn+X]=Y Clk=4
+{
+	/*Clk = 4*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	cpu_write(cpu, value + (cpu->regs).X, (cpu->regs).Y);
+	return;
+}
+
+void sty__nnnn(cpu * cpu) //[nnnn]=Y Clk=4
+{
+	/*Clk = 4*/
+	uint8_t valueLow, valueHigh;
+	uint16_t addr = 0;
+	valueLow = cpu_read(cpu, (cpu->regs).PC + 1);
+	valueHigh = cpu_read(cpu, (cpu->regs).PC + 2);
+	addr = valueLow;
+	addr |= valueHigh << 8;
+	cpu_write(cpu, addr, (cpu->regs).Y);
+	return;
+}
+
+void pha(cpu * cpu) //[S]=A, S=S-1 Clk=3
+{
+	
+}
+
+void php(cpu * cpu); //[S]=P, S=S-1 (flags) Clk=3
+void pla(cpu * cpu); //S=S+1, A=[S] Clk=4
+void plp(cpu * cpu); //S=S+1, P=[S] (flags) Clk= 4
 
 
 
