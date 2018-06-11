@@ -15,7 +15,7 @@ struct _instruction
 
 #define OPNUM 151
 
-#define RAM_SIZE 0x800
+#define RAM_SIZE 0x8000
 
 /*Private functions*/
 void printRegisters(cpu * cpu);
@@ -81,6 +81,15 @@ void adc__nnnn_X(cpu * cpu);
 void adc__nnnn_Y(cpu * cpu);
 void adc___nn_X(cpu * cpu);
 void adc___nn_Y(cpu * cpu);
+
+void sbc_nn(cpu * cpu);
+void sbc__nn(cpu * cpu);
+void sbc__nn_X(cpu * cpu);
+void sbc__nnnn(cpu * cpu);
+void sbc__nnnn_X(cpu * cpu);
+void sbc__nnnn_Y(cpu * cpu);
+void sbc___nn_X(cpu * cpu);
+void sbc___nn_Y(cpu * cpu);
 
 
 
@@ -370,7 +379,7 @@ uint8_t cpu_read(cpu * cpu, uint16_t addr)
 {
 	switch(addr)
 	{
-		case 0x0000 ... 0x07FF:
+		case 0x0000 ... 0x7FFF:
 			return cpu->ram[addr];
 		case 0x8000 ... 0xFFFF:
 			return cpu->prg_rom[addr & 0x7FFF];
@@ -385,7 +394,7 @@ void cpu_write(cpu * cpu, uint16_t addr, uint8_t value)
 {
 	switch(addr)
 	{
-		case 0x0000 ... 0x07FF:
+		case 0x0000 ... 0x7FFF:
 			cpu->ram[addr] = value;
 		case 0x8000 ... 0xFFFF:
 			cpu->prg_rom[addr & 0x7FFF] = value;
@@ -900,12 +909,20 @@ void plp(cpu * cpu) //S=S+1, P=[S] (flags) Clk= 4
 void adc_nn(cpu * cpu) //A=A+C+nn Clk=2
 {
 	/*Clk = 2*/
-	uint8_t value;
+	uint16_t value;
 	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	
 	if(FLAG_IS_CARRY(cpu->regs))
-		(cpu->regs).A += 1 + value;
-		return;
-	(cpu->regs).A += value;
+		value = value + 1;
+
+	value += (cpu->regs).A;
+
+	carrycalc(cpu, value);
+	zerocalc(cpu, value);
+	overflowcalc(cpu, value);
+	signcalc(cpu, value);
+
+	saveToA(cpu, value);
 	return;
 }
 
@@ -929,8 +946,27 @@ void adc___nn_X(cpu * cpu); //A=A+C+[word[nn+X]] Clk=6
 void adc___nn_Y(cpu * cpu); //A=A+C+[word[nn]+Y] Clk=5*
 
 
+void sbc_nn(cpu * cpu) //A=A+C-1-nn Clk=2
+{
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+
+}
+void sbc__nn(cpu * cpu);
+void sbc__nn_X(cpu * cpu);
+void sbc__nnnn(cpu * cpu);
+void sbc__nnnn_X(cpu * cpu);
+void sbc__nnnn_Y(cpu * cpu);
+void sbc___nn_X(cpu * cpu);
+void sbc___nn_Y(cpu * cpu);
 
 
-
+	/*{"SBC nn", "SBC A,[nn]", 2, 0xE5, NULL}, //A=A+C-1-[nn] Clk=3
+	{"SBC nn,X", "SBC A,[nn+X]", 2, 0xF5, NULL}, //A=A+C-1-[nn+X] Clk=4
+	{"SBC nnnn", "SBC A,[nnnn]", 3, 0xED, NULL}, //A=A+C-1-[nnnn] Clk=4
+	{"SBC nnnn,X", "SBC A,[nnnn+X]", 3, 0xFD, NULL}, //A=A+C-1-[nnnn+X] Clk=4*
+	{"SBC nnnn,Y", "SBC A,[nnnn+Y]", 3, 0xF9, NULL}, //A=A+C-1-[nnnn+Y] Clk=4*
+	{"SBC (nn,X)", "SBC A,[[nn+X]]", 2, 0xE1, NULL}, //A=A+C-1-[word[nn+X]] Clk=6
+	{"SBC (nn),Y", "SBC A,[[nn]+Y]", 2, 0xF1, NULL}, //A=A+C-1-[word[nn]+Y] Clk=5*/
 
 
