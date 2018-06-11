@@ -73,6 +73,15 @@ void php(cpu * cpu);
 void pla(cpu * cpu);
 void plp(cpu * cpu);
 
+void adc_nn(cpu * cpu);
+void adc__nn(cpu * cpu);
+void adc__nn_X(cpu * cpu);
+void adc__nnnn(cpu * cpu);
+void adc__nnnn_X(cpu * cpu);
+void adc__nnnn_Y(cpu * cpu);
+void adc___nn_X(cpu * cpu);
+void adc___nn_Y(cpu * cpu);
+
 
 
 /*Opcodes*/
@@ -130,10 +139,10 @@ const instruction instructions[256] = {
 
 	//Push/Pull
 	//Notes: PLA sets Z and N according to content of A. The B-flag and unused flags cannot be changed by PLP, these flags are always written as "1" by PHP.
-	{"PHA", "PUSH A", 1, 0x48, NULL}, //[S]=A, S=S-1 Clk=3
-	{"PHP", "PUSH P", 1, 0x08, NULL}, //[S]=P, S=S-1 (flags) Clk=3
-	{"PLA", "POP  A", 1, 0x68, NULL}, //S=S+1, A=[S] Clk=4
-	{"PLP", "POP  P", 1, 0x28, NULL}, //S=S+1, P=[S] (flags) Clk= 4
+	{"PHA", "PUSH A", 1, 0x48, pha}, //[S]=A, S=S-1 Clk=3
+	{"PHP", "PUSH P", 1, 0x08, php}, //[S]=P, S=S-1 (flags) Clk=3
+	{"PLA", "POP  A", 1, 0x68, pla}, //S=S+1, A=[S] Clk=4
+	{"PLP", "POP  P", 1, 0x28, plp}, //S=S+1, P=[S] (flags) Clk= 4
 
 	/////////////////////////////////////
 	//CPU Arithmetic/Logical Operations//
@@ -787,7 +796,7 @@ void sta___nn_Y(cpu * cpu) //[WORD[nn]+y]=A Clk=6
 	uint16_t addr = 0;
 	value = cpu_read(cpu, (cpu->regs).PC + 1);
 	valueLow = cpu_read(cpu, value);
-	valueHigh = cpu_write(cpu, value + 1);
+	valueHigh = cpu_read(cpu, value + 1);
 	addr = valueLow;
 	addr |= valueHigh << 8;
 	cpu_write(cpu, addr + (cpu->regs).Y, (cpu->regs).A);
@@ -858,12 +867,66 @@ void sty__nnnn(cpu * cpu) //[nnnn]=Y Clk=4
 
 void pha(cpu * cpu) //[S]=A, S=S-1 Clk=3
 {
-	
+	/*Clk = 3*/
+	cpu_write(cpu, 0x100 + (cpu->regs).S, (cpu->regs).A);
+	(cpu->regs).S -= 1;
+	return;
 }
 
-void php(cpu * cpu); //[S]=P, S=S-1 (flags) Clk=3
-void pla(cpu * cpu); //S=S+1, A=[S] Clk=4
-void plp(cpu * cpu); //S=S+1, P=[S] (flags) Clk= 4
+void php(cpu * cpu) //[S]=P, S=S-1 (flags) Clk=3
+{
+	/*Clk = 3*/
+	cpu_write(cpu, 0x100 + (cpu->regs).S, (cpu->regs).P);
+	(cpu->regs).S -= 1;
+	return;
+}
+
+void pla(cpu * cpu) //S=S+1, A=[S] Clk=4
+{
+	/*Clk = 4*/
+	(cpu->regs).S += 1;
+	(cpu->regs).A = cpu_read(cpu, 0x100 + (cpu->regs).S);
+	return;
+}
+
+void plp(cpu * cpu) //S=S+1, P=[S] (flags) Clk= 4
+{
+	/*Clk = 4*/
+	(cpu->regs).S += 1;
+	(cpu->regs).P = cpu_read(cpu, 0x100 + (cpu->regs).S);
+	return;
+}
+
+void adc_nn(cpu * cpu) //A=A+C+nn Clk=2
+{
+	/*Clk = 2*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	if(FLAG_IS_CARRY(cpu->regs))
+		(cpu->regs).A += 1 + value;
+		return;
+	(cpu->regs).A += value;
+	return;
+}
+
+void adc__nn(cpu * cpu) //A=A+C+[nn] Clk=3
+{
+	/*Clk = 3*/
+	uint8_t value;
+	value = cpu_read(cpu, (cpu->regs).PC + 1);
+	if(FLAG_IS_CARRY(cpu->regs))
+		(cpu->regs).A += 1 + cpu_read(cpu, value);
+		return;
+	(cpu->regs).A += cpu_read(cpu, value);
+	return;
+}
+
+void adc__nn_X(cpu * cpu); //A=A+C+[nn+X] Clk=4
+void adc__nnnn(cpu * cpu); //A=A+C+[nnnn] Clk=4
+void adc__nnnn_X(cpu * cpu); //A=A+C+[nnnn+X] Clk=4*
+void adc__nnnn_Y(cpu * cpu); //A=A+C+[nnnn+Y] Clk=4*
+void adc___nn_X(cpu * cpu); //A=A+C+[word[nn+X]] Clk=6
+void adc___nn_Y(cpu * cpu); //A=A+C+[word[nn]+Y] Clk=5*
 
 
 

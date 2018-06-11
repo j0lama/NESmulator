@@ -17,11 +17,11 @@ typedef struct _registers
 #define FLAG_OVERFLOW (1 << 6)
 #define FLAG_NEGATIVE (1 << 7)
 
-#define FLAG_IS_CARRY (registers.P & FLAG_CARRY)
-#define FLAG_IS_ZERO (registers.P & FLAG_ZERO)
-#define FLAG_IS_OVERFLOW (registers.P & FLAG_OVERFLOW)
-#define FLAG_IS_NEGATIVE (registers.P & FLAG_NEGATIVE)
+#define FLAG_IS_CARRY(registers) (registers.P & FLAG_CARRY)
+#define FLAG_IS_ZERO(registers) (registers.P & FLAG_ZERO)
+#define FLAG_IS_OVERFLOW(registers) (registers.P & FLAG_OVERFLOW)
+#define FLAG_IS_NEGATIVE(registers) (registers.P & FLAG_NEGATIVE)
 
-#define FLAG_IS_SET(flag) (registers.P & (flag))
-#define FLAG_SET(flag) (registers.P |= (flag))
-#define FLAG_CLEAR(flag) (registers.P &= ~(flag))
+#define FLAG_IS_SET(registers, flag) (registers.P & (flag))
+#define FLAG_SET(registers, flag) (registers.P |= (flag))
+#define FLAG_CLEAR(registers, flag) (registers.P &= ~(flag))
